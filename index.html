@@ -253,8 +253,9 @@ async function fetchRouteInfo(callsign) {
   const cs = callsign.replace(/\s+/g, '');
   try {
     const urls = [
+      `https://proxy.cors.dev/https://api.adsbdb.com/v0/callsign/${encodeURIComponent(cs)}`,
       `https://api.adsbdb.com/v0/callsign/${encodeURIComponent(cs)}`,
-      `https://corsproxy.io/?${encodeURIComponent('https://api.adsbdb.com/v0/callsign/' + cs)}`
+      `https://api.allorigins.win/raw?url=${encodeURIComponent('https://api.adsbdb.com/v0/callsign/' + cs)}`
     ];
     for (const url of urls) {
       try {
@@ -321,18 +322,25 @@ async function selectAircraft(hex) {
 
 /* ===== Data fetch ===== */
 async function fetchWithFallback(url) {
-  // try direct, then CORS proxies (helps when opened from file:// / content://)
+  // adsb.lol has no CORS — use working public proxies first
   const candidates = [
-    url,
-    `https://corsproxy.io/?${encodeURIComponent(url)}`,
-    `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
+    `https://proxy.cors.dev/${url}`,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+    url
   ];
   let lastErr;
   for (const u of candidates) {
     try {
       const res = await fetch(u, { cache: 'no-store' });
       if (!res.ok) throw new Error('HTTP ' + res.status);
-      return await res.json();
+      const data = await res.json();
+      if (data && (data.ac || data.states || data.response)) return data;
+      if (Array.isArray(data)) return data;
+      // allorigins sometimes wraps
+      if (data && data.contents) {
+        try { return JSON.parse(data.contents); } catch (_) {}
+      }
+      return data;
     } catch (e) {
       lastErr = e;
     }
