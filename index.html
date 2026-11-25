@@ -1,0 +1,560 @@
+<!doctype html>
+<html lang="he">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#050a11">
+<title>SkyScope · Flight Radar (Live)</title>
+<style>
+:root{color-scheme:dark;--cyan:#38f6e5;--muted:#91a7b4;--panel:#0c1822}
+*{box-sizing:border-box}
+body{margin:0;background:#050a11;color:#f2fbff;font-family:Inter,Roboto,"Arial",sans-serif;min-height:100dvh}
+header{height:62px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;border-bottom:1px solid #17232d}
+.brand{font-weight:800;letter-spacing:1px}.brand span{color:var(--cyan)}
+.icon{border:0;background:none;color:white;font-size:22px;padding:10px}
+main{padding:14px 16px 100px;max-width:600px;margin:auto}
+.status{display:flex;align-items:center;justify-content:space-between;margin:4px 2px 12px;color:var(--muted);font-size:13px}
+.live-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#38e99a;margin-right:7px;box-shadow:0 0 10px #38e99a}
+.live-dot.off{background:#718692;box-shadow:none}
+.radar-shell{width:min(92vw,510px);aspect-ratio:1;margin:0 auto;position:relative;border-radius:50%;padding:10px;background:radial-gradient(circle,#222c36 61%,#121820 63%,#48515b 66%,#171d24 72%,#05080c 74%);box-shadow:0 18px 45px #000a,inset 0 0 8px #8a939966}
+.radar{height:100%;width:100%;border-radius:50%;overflow:hidden;position:relative;border:2px solid #62dace;background:radial-gradient(circle at 57% 46%,#273b3f 0,#13262e 50%,#10191e 100%)}
+.map{position:absolute;inset:-10%;background:linear-gradient(23deg,transparent 37%,#49614d 38%,#344c3e 54%,transparent 55%),linear-gradient(140deg,transparent 44%,#394c3e 45%,#283d37 63%,transparent 64%),repeating-linear-gradient(8deg,transparent 0 38px,#53625a44 39px 41px),repeating-linear-gradient(96deg,transparent 0 52px,#65706633 53px 55px);filter:saturate(.85)}
+.water{position:absolute;inset:8% 52% 60% 4%;background:#15414a;clip-path:polygon(0 0,100% 0,83% 80%,40% 100%,0 72%);opacity:.75}
+.grid{position:absolute;inset:8%;border:1px solid #4ce9dd80;border-radius:50%;background:radial-gradient(circle,transparent 32%,#48e5d322 32.4%,transparent 32.9%,transparent 65%,#48e5d333 65.3%,transparent 65.8%)}
+.cross{position:absolute;inset:0;background:linear-gradient(90deg,transparent 49.8%,#53eadd66 50%,transparent 50.3%),linear-gradient(0deg,transparent 49.8%,#53eadd66 50%,transparent 50.3%)}
+.sweep{position:absolute;width:50%;height:50%;left:50%;top:50%;transform-origin:0 0;background:conic-gradient(from 0deg,transparent 0 305deg,#23f0de00 330deg,#23f0de77 359deg);animation:rotate 8s linear infinite}
+@keyframes rotate{to{transform:rotate(360deg)}}
+.compass{position:absolute;inset:4%;pointer-events:none;color:#d7ffff;font-weight:700;font-size:14px}
+.compass b{position:absolute}
+.compass .n{top:0;left:calc(50% - 5px)}
+.compass .s{bottom:0;left:calc(50% - 5px)}
+.compass .e{right:0;top:calc(50% - 8px)}
+.compass .w{left:0;top:calc(50% - 8px)}
+.town{position:absolute;color:#d7e0d5;font-size:10px;text-shadow:0 1px 4px #000;white-space:nowrap}
+.plane{position:absolute;color:#47ffee;text-shadow:0 0 8px #14e8da;font-size:21px;transform:rotate(var(--r,0deg));filter:drop-shadow(0 0 3px #1ff);cursor:pointer;transition:color .15s,text-shadow .15s;z-index:5}
+.plane.selected{color:#ffec41;text-shadow:0 0 12px #ffdf16;z-index:10}
+.tag{position:absolute;background:#071018eF;border:1px solid #48d8c8;padding:4px 7px;border-radius:4px;font-size:10px;white-space:nowrap;color:white;box-shadow:0 3px 10px #0008;z-index:6;pointer-events:none}
+.tag strong{color:#ffea54}
+.chip{position:absolute;top:5%;background:#061019d9;border:1px solid #46e4d3;color:white;border-radius:20px;padding:6px 12px;font-size:11px;z-index:4}
+.chip.left{left:17%;border-color:#3cf1b3}
+.chip.right{right:16%}
+.clock{position:absolute;top:4%;left:50%;transform:translateX(-50%);border:1px solid #55e8dc;background:#07131b;border-radius:20px;padding:5px 10px;font-size:12px;z-index:4}
+.zoom-controls{position:absolute;bottom:12%;right:8%;display:flex;flex-direction:column;gap:6px;z-index:8}
+.zoom-btn{width:36px;height:36px;border-radius:50%;border:1px solid #46e4d3;background:#061019e6;color:#75fff0;font-size:20px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px #0008}
+.zoom-btn:active{transform:scale(.92);background:#10302f}
+.zoom-label{position:absolute;bottom:12%;left:8%;background:#061019d9;border:1px solid #46e4d3;color:#a8e8df;border-radius:14px;padding:4px 10px;font-size:11px;z-index:8}
+.info{margin:18px auto 0;max-width:510px;background:linear-gradient(135deg,#0c1923,#09111a);border:1px solid #1d3440;border-radius:16px;padding:15px}
+.info-top{display:flex;justify-content:space-between;align-items:flex-start}
+.callsign{font-size:18px;font-weight:800}
+.route{font-size:12px;color:var(--muted);margin-top:4px}
+.badge{border-radius:20px;padding:5px 9px;background:#142a2b;color:#4af4dc;font-size:11px}
+.details{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
+.metric{background:#0a141d;border-radius:10px;padding:10px}
+.metric small{display:block;color:var(--muted);font-size:10px;margin-bottom:6px}
+.metric b{font-size:13px}
+.toolbar{display:flex;gap:9px;margin:14px 0}
+.tool{flex:1;background:#0b1721;border:1px solid #21323e;color:white;padding:11px;border-radius:12px;font-size:13px}
+.tool.active{background:#10302f;border-color:#2ae6d1;color:#75fff0}
+.hint{text-align:center;color:#718692;font-size:11px;margin:13px 0 0}
+.bottom{position:fixed;bottom:0;left:0;right:0;padding:14px max(18px,calc((100vw - 560px)/2)) calc(14px + env(safe-area-inset-bottom));background:linear-gradient(transparent,#050a11 20%)}
+.bottom button{width:100%;border:0;border-radius:14px;padding:15px;background:#12232c;color:#ddf7f4;font-weight:700;font-size:14px;border:1px solid #28434a}
+.bottom button:active,.tool:active{transform:scale(.99)}
+#statusMsg{font-size:11px;color:#718692;margin-top:6px;text-align:center}
+</style>
+</head>
+<body>
+<header>
+  <button class="icon" aria-label="תפריט">☰</button>
+  <div class="brand">SKY<span>SCOPE</span></div>
+  <button class="icon" id="loc" aria-label="מיקום">⌖</button>
+</header>
+<main>
+  <div class="status">
+    <span><i class="live-dot" id="liveDot"></i><span id="liveLabel">LIVE · טוען...</span></span>
+    <span id="clock">--:--:-- UTC</span>
+  </div>
+  <div class="radar-shell">
+    <div class="radar" id="radar">
+      <div class="map"></div>
+      <div class="water"></div>
+      <div class="grid"></div>
+      <div class="cross"></div>
+      <div class="sweep"></div>
+      <div class="compass"><b class="n">N</b><b class="s">S</b><b class="e">E</b><b class="w">W</b></div>
+      <div class="clock" id="radarClock">--:--</div>
+      <div class="chip left" id="chipLive">● Live</div>
+      <div class="chip right">Map</div>
+      <!-- Towns -->
+      <span class="town" style="left:18%;top:22%">נתניה</span>
+      <span class="town" style="left:62%;top:18%">חדרה</span>
+      <span class="town" style="left:8%;top:48%">תל אביב</span>
+      <span class="town" style="left:52%;top:48%">רמת גן</span>
+      <span class="town" style="left:28%;top:68%">ראשון לציון</span>
+      <span class="town" style="left:55%;top:78%">נתב״ג</span>
+      <span class="town" style="left:72%;top:58%">פתח תקווה</span>
+      <!-- Planes will be injected here by JS -->
+      <div id="planesLayer"></div>
+      <div id="tagsLayer"></div>
+      <div class="zoom-controls">
+        <button class="zoom-btn" id="zoomIn" title="הגדל">+</button>
+        <button class="zoom-btn" id="zoomOut" title="הקטן">−</button>
+      </div>
+      <div class="zoom-label" id="zoomLabel">90 nm</div>
+    </div>
+  </div>
+  <div class="toolbar">
+    <button class="tool active" id="liveBtn">◉ &nbsp; Live</button>
+    <button class="tool" id="mapBtn">▧ &nbsp; Map</button>
+    <button class="tool" id="soundBtn">♫ &nbsp; שמע כבוי</button>
+  </div>
+  <section class="info">
+    <div class="info-top">
+      <div>
+        <div class="callsign" id="callsign">— <span style="color:#37f5df">✈</span></div>
+        <div class="route" id="route">בחר מטוס מהמכ״ם</div>
+      </div>
+      <span class="badge" id="badge">—</span>
+    </div>
+    <div class="details">
+      <div class="metric"><small>גובה</small><b id="alt">—</b></div>
+      <div class="metric"><small>מהירות</small><b id="speed">—</b></div>
+      <div class="metric"><small>כיוון</small><b id="heading">—</b></div>
+    </div>
+  </section>
+  <p class="hint">גע בסמל מטוס כדי לבחור טיסה · מקור: adsb.lol (ADS-B חי)</p>
+  <div id="statusMsg"></div>
+</main>
+<div class="bottom">
+  <button id="centerBtn">⌖ &nbsp; רענן / מרכז את המכ״ם</button>
+</div>
+
+<script>
+/* ===== Configuration ===== */
+const CENTER = { lat: 32.0823, lon: 34.8106 }; // רמת גן / גוש דן
+const FETCH_RADIUS_NM = 120;               // רדיוס שליפת נתונים (קבוע, רחב יותר)
+const REFRESH_MS = 12000;
+const MAX_PLANES = 40;
+const ZOOM_STEPS = [25, 40, 60, 90, 120, 180]; // nm
+let viewRadiusNm = 60;                     // זום התחלתי (קרוב יותר – פחות צפוף)
+
+/* ===== Helpers ===== */
+const el = id => document.getElementById(id);
+const planesLayer = el('planesLayer');
+const tagsLayer = el('tagsLayer');
+
+let liveMode = true;
+let selectedHex = null;
+let aircraftCache = [];
+let refreshTimer = null;
+
+function updateClock() {
+  const d = new Date();
+  el('clock').textContent = d.toISOString().slice(11,19) + ' UTC';
+  el('radarClock').textContent = d.toISOString().slice(11,16);
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+/* Convert lat/lon relative to center into % position on the circular radar */
+function geoToRadar(lat, lon) {
+  const dLat = (lat - CENTER.lat) * 60;          // nm
+  const dLon = (lon - CENTER.lon) * 60 * Math.cos(CENTER.lat * Math.PI / 180);
+  const dist = Math.sqrt(dLat*dLat + dLon*dLon);
+  const scale = 42; // % of radar radius corresponding to viewRadiusNm
+  const x = 50 + (dLon / viewRadiusNm) * scale;
+  const y = 50 - (dLat / viewRadiusNm) * scale;
+  return {
+    left: Math.max(4, Math.min(96, x)),
+    top:  Math.max(4, Math.min(96, y)),
+    dist,
+    inView: dist <= viewRadiusNm * 1.05
+  };
+}
+
+function updateZoomLabel() {
+  el('zoomLabel').textContent = viewRadiusNm + ' nm';
+}
+
+function formatAlt(ft) {
+  if (ft == null || isNaN(ft)) return '—';
+  if (ft < 100) return Math.round(ft) + ' ft';
+  return Math.round(ft).toLocaleString() + ' ft';
+}
+function formatSpd(kt) {
+  if (kt == null || isNaN(kt)) return '—';
+  return Math.round(kt) + ' kt';
+}
+function formatHdg(deg) {
+  if (deg == null || isNaN(deg)) return '—';
+  return Math.round(deg) + '°';
+}
+
+/* ===== Rendering ===== */
+function clearPlanes() {
+  planesLayer.innerHTML = '';
+  tagsLayer.innerHTML = '';
+}
+
+function renderPlanes(list) {
+  clearPlanes();
+  aircraftCache = list;
+
+  // compute distances and keep only planes inside current view (+ small margin)
+  const withPos = list.map(ac => {
+    const pos = geoToRadar(ac.lat, ac.lon);
+    return { ...ac, _dist: pos.dist, _pos: pos };
+  }).filter(ac => ac._pos.inView);
+
+  withPos.sort((a,b) => a._dist - b._dist);
+
+  withPos.slice(0, MAX_PLANES).forEach((ac, idx) => {
+    const pos = ac._pos;
+
+    const plane = document.createElement('span');
+    plane.className = 'plane' + (ac.hex === selectedHex ? ' selected' : '');
+    plane.style.left = pos.left + '%';
+    plane.style.top  = pos.top  + '%';
+    plane.style.setProperty('--r', (ac.track || 0) + 'deg');
+    plane.textContent = '✈';
+    plane.dataset.hex = ac.hex;
+    plane.title = (ac.flight || ac.hex) + ' · ' + formatAlt(ac.alt) + ' · ' + Math.round(pos.dist) + ' nm';
+    plane.addEventListener('click', () => selectAircraft(ac.hex));
+    planesLayer.appendChild(plane);
+
+    // tags for closest few
+    if (idx < 5 && ac.flight) {
+      const tag = document.createElement('div');
+      tag.className = 'tag';
+      tag.style.left = Math.min(85, pos.left + 3) + '%';
+      tag.style.top  = Math.max(8, pos.top - 9) + '%';
+      tag.innerHTML = `<strong>${ac.flight.trim()}</strong><br>${formatAlt(ac.alt)} · HDG ${formatHdg(ac.track)}`;
+      tagsLayer.appendChild(tag);
+    }
+  });
+
+  updateZoomLabel();
+}
+
+function guessPhase(ac) {
+  const alt = ac.alt, rate = ac.baro_rate || 0;
+  if (alt != null && alt < 80) return 'על הקרקע';
+  if (rate > 300) return 'בטיפוס';
+  if (rate < -300) return 'בירידה / נחיתה';
+  return 'בטיסה';
+}
+
+function isNearIsrael(ac) {
+  // roughly inside Israel bounding box
+  return ac.lat > 29.4 && ac.lat < 33.4 && ac.lon > 34.2 && ac.lon < 35.9;
+}
+
+async function fetchRouteInfo(callsign) {
+  if (!callsign) return null;
+  const cs = callsign.replace(/\s+/g, '');
+  try {
+    const urls = [
+      `https://api.adsbdb.com/v0/callsign/${encodeURIComponent(cs)}`,
+      `https://corsproxy.io/?${encodeURIComponent('https://api.adsbdb.com/v0/callsign/' + cs)}`
+    ];
+    for (const url of urls) {
+      try {
+        const res = await fetch(url, { cache: 'no-store' });
+        if (!res.ok) continue;
+        const data = await res.json();
+        const fr = data.response && data.response.flightroute;
+        if (fr && (fr.origin || fr.destination)) return fr;
+      } catch (_) {}
+    }
+  } catch (_) {}
+  return null;
+}
+
+function formatRouteLine(fr, ac) {
+  if (!fr) {
+    // heuristic when no schedule data
+    if (isNearIsrael(ac) && (ac.baro_rate || 0) < -200 && ac.alt < 12000)
+      return 'כנראה נוחת בישראל (נתב״ג / סביבה)';
+    if (isNearIsrael(ac) && (ac.baro_rate || 0) > 200 && ac.alt < 15000)
+      return 'כנראה ממריא מישראל';
+    return ac.r ? `רישום: ${ac.r} · ${ac.t || ''}` : (ac.t || 'יעד לא ידוע');
+  }
+  const o = fr.origin || {};
+  const d = fr.destination || {};
+  const oName = o.municipality || o.name || o.iata_code || o.icao_code || '?';
+  const dName = d.municipality || d.name || d.iata_code || d.icao_code || '?';
+  const oCode = o.iata_code || o.icao_code || '';
+  const dCode = d.iata_code || d.icao_code || '';
+  const oCountry = o.country_name || o.country_iso_name || '';
+  const dCountry = d.country_name || d.country_iso_name || '';
+
+  let line = `${oName}${oCode ? ' ('+oCode+')' : ''} → ${dName}${dCode ? ' ('+dCode+')' : ''}`;
+  if (d.country_iso_name === 'IL' || d.icao_code === 'LLBG' || d.iata_code === 'TLV') {
+    line += ' · נוחת בישראל';
+  } else if (o.country_iso_name === 'IL' || o.icao_code === 'LLBG' || o.iata_code === 'TLV') {
+    line += ' · ממריא מישראל';
+  } else if (dCountry) {
+    line += ` · יעד: ${dCountry}`;
+  }
+  return line;
+}
+
+async function selectAircraft(hex) {
+  selectedHex = hex;
+  document.querySelectorAll('.plane').forEach(p => {
+    p.classList.toggle('selected', p.dataset.hex === hex);
+  });
+  const ac = aircraftCache.find(a => a.hex === hex);
+  if (!ac) return;
+
+  el('callsign').innerHTML = (ac.flight || ac.hex || '—') + ' <span style="color:#37f5df">✈</span>';
+  el('route').textContent = 'טוען מסלול...';
+  el('alt').textContent = formatAlt(ac.alt);
+  el('speed').textContent = formatSpd(ac.gs);
+  el('heading').textContent = formatHdg(ac.track);
+  el('badge').textContent = guessPhase(ac);
+  if (soundOn) playBlip(1400, 0.06, 0.1);
+
+  // try live route lookup
+  const fr = await fetchRouteInfo(ac.flight);
+  el('route').textContent = formatRouteLine(fr, ac);
+}
+
+/* ===== Data fetch ===== */
+async function fetchWithFallback(url) {
+  // try direct, then CORS proxies (helps when opened from file:// / content://)
+  const candidates = [
+    url,
+    `https://corsproxy.io/?${encodeURIComponent(url)}`,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
+  ];
+  let lastErr;
+  for (const u of candidates) {
+    try {
+      const res = await fetch(u, { cache: 'no-store' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return await res.json();
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  throw lastErr || new Error('כל הניסיונות נכשלו');
+}
+
+async function fetchLive() {
+  el('statusMsg').textContent = 'מעדכן נתונים...';
+  try {
+    const url = `https://api.adsb.lol/v2/lat/${CENTER.lat}/lon/${CENTER.lon}/dist/${FETCH_RADIUS_NM}`;
+    const data = await fetchWithFallback(url);
+    const acs = (data.ac || []).filter(a => a.lat != null && a.lon != null);
+
+    const mapped = acs.map(a => ({
+      hex: a.hex,
+      flight: (a.flight || '').trim() || null,
+      lat: a.lat,
+      lon: a.lon,
+      alt: a.alt_baro != null ? a.alt_baro : a.alt_geom,
+      gs: a.gs,
+      track: a.track != null ? a.track : a.true_heading,
+      r: a.r || null,
+      t: a.t || null,
+      baro_rate: a.baro_rate || 0
+    }));
+
+    renderPlanes(mapped);
+
+    el('liveLabel').textContent = `LIVE · ${mapped.length} מטוסים`;
+    el('liveDot').classList.remove('off');
+    el('chipLive').textContent = '● Live';
+    el('liveBtn').classList.add('active');
+    liveMode = true;
+    el('statusMsg').textContent = `עודכן · מקור: adsb.lol · תצוגה ${viewRadiusNm} nm`;
+    return true;
+  } catch (err) {
+    console.warn('Live fetch failed', err);
+    el('liveLabel').textContent = 'סימולציה · אין חיבור';
+    el('liveDot').classList.add('off');
+    el('chipLive').textContent = '○ Sim';
+    el('liveBtn').classList.remove('active');
+    liveMode = false;
+    stopRefresh();
+    el('statusMsg').textContent = 'לא ניתן לטעון נתונים חיים (חסימת דפדפן/רשת). מוצגת סימולציה. נסה לפתוח דרך https או Wi‑Fi.';
+    loadSimulation();
+    return false;
+  }
+}
+
+/* ===== Simulation fallback ===== */
+function loadSimulation() {
+  const sim = [
+    {hex:'sim1',flight:'ELY312',lat:32.05,lon:34.88,alt:1200,gs:180,track:300,r:'4X-EDF',t:'B789',baro_rate:-400},
+    {hex:'sim2',flight:'AEE456',lat:32.22,lon:34.75,alt:28000,gs:420,track:250,r:null,t:'A320',baro_rate:0},
+    {hex:'sim3',flight:'WZZ18A',lat:31.95,lon:34.70,alt:18500,gs:310,track:110,r:null,t:'A321',baro_rate:-800},
+    {hex:'sim4',flight:'ISR801',lat:32.15,lon:34.95,alt:8500,gs:280,track:40,r:null,t:'A320',baro_rate:600},
+    {hex:'sim5',flight:'ARK112',lat:32.30,lon:34.85,alt:22000,gs:390,track:15,r:null,t:'E190',baro_rate:0},
+    {hex:'sim6',flight:'UAL90',lat:31.88,lon:34.92,alt:32000,gs:460,track:280,r:null,t:'B777',baro_rate:0},
+    {hex:'sim7',flight:'BAW116',lat:32.10,lon:35.05,alt:35000,gs:470,track:5,r:null,t:'B789',baro_rate:0},
+    {hex:'sim8',flight:'RYR22A',lat:32.00,lon:34.60,alt:14000,gs:340,track:-20,r:null,t:'B738',baro_rate:-500},
+    {hex:'sim9',flight:'THY123',lat:32.25,lon:34.70,alt:16000,gs:300,track:50,r:null,t:'A321',baro_rate:0},
+    {hex:'sim10',flight:'LY341',lat:31.98,lon:34.82,alt:2500,gs:210,track:330,r:'4X-EKE',t:'B738',baro_rate:-350}
+  ];
+  renderPlanes(sim);
+  el('liveLabel').textContent = 'סימולציה · ' + sim.length + ' מטוסים';
+}
+
+/* ===== Controls ===== */
+el('liveBtn').onclick = async () => {
+  if (liveMode) {
+    // turn off
+    liveMode = false;
+    el('liveBtn').classList.remove('active');
+    stopRefresh();
+    el('liveLabel').textContent = 'השהייה';
+    el('liveDot').classList.add('off');
+    el('chipLive').textContent = '○ Off';
+  } else {
+    // try to go live again
+    el('liveBtn').classList.add('active');
+    const ok = await fetchLive();
+    if (ok) startRefresh();
+  }
+};
+
+el('mapBtn').onclick = () => {
+  const map = document.querySelector('.map');
+  map.style.filter = map.style.filter ? '' : 'grayscale(1) brightness(.75)';
+  el('mapBtn').classList.toggle('active');
+};
+
+/* ===== Radar sound (Web Audio) ===== */
+let audioCtx = null;
+let soundOn = false;
+let soundTimer = null;
+
+function ensureAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+function playBlip(freq = 880, dur = 0.08, vol = 0.12) {
+  try {
+    const ctx = ensureAudio();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(vol, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + dur + 0.02);
+  } catch (_) {}
+}
+
+function playSweepTone() {
+  try {
+    const ctx = ensureAudio();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(420, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(980, ctx.currentTime + 0.35);
+    gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.09, ctx.currentTime + 0.05);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.45);
+  } catch (_) {}
+}
+
+function startSoundLoop() {
+  stopSoundLoop();
+  playSweepTone();
+  soundTimer = setInterval(() => {
+    if (!soundOn) return;
+    playSweepTone();
+    setTimeout(() => { if (soundOn) playBlip(1200, 0.05, 0.06); }, 900);
+  }, 2000);
+}
+
+function stopSoundLoop() {
+  if (soundTimer) {
+    clearInterval(soundTimer);
+    soundTimer = null;
+  }
+}
+
+el('soundBtn').onclick = () => {
+  soundOn = !soundOn;
+  el('soundBtn').textContent = soundOn ? '♫  שמע פעיל' : '♫  שמע כבוי';
+  el('soundBtn').classList.toggle('active', soundOn);
+  if (soundOn) {
+    ensureAudio(); // must run from user tap
+    startSoundLoop();
+  } else {
+    stopSoundLoop();
+  }
+};
+
+el('centerBtn').onclick = () => {
+  document.querySelector('.radar').animate(
+    [{transform:'scale(.97)'},{transform:'scale(1)'}],
+    {duration:350}
+  );
+  window.scrollTo({top:0, behavior:'smooth'});
+  if (liveMode) fetchLive();
+};
+
+el('loc').onclick = () => {
+  alert('מיקום נוכחי ממוקד על רמת גן / גוש דן.\nתצוגה נוכחית: ' + viewRadiusNm + ' nm.\nמקור נתונים: adsb.lol (ADS-B חי).');
+};
+
+function setZoom(nm) {
+  viewRadiusNm = nm;
+  updateZoomLabel();
+  // re-render from cache (no new network call needed)
+  if (aircraftCache.length) renderPlanes(aircraftCache);
+}
+
+el('zoomIn').onclick = () => {
+  const idx = ZOOM_STEPS.indexOf(viewRadiusNm);
+  if (idx > 0) setZoom(ZOOM_STEPS[idx - 1]);
+  else if (viewRadiusNm > ZOOM_STEPS[0]) setZoom(ZOOM_STEPS[0]);
+};
+
+el('zoomOut').onclick = () => {
+  const idx = ZOOM_STEPS.indexOf(viewRadiusNm);
+  if (idx >= 0 && idx < ZOOM_STEPS.length - 1) setZoom(ZOOM_STEPS[idx + 1]);
+  else if (viewRadiusNm < ZOOM_STEPS[ZOOM_STEPS.length - 1]) setZoom(ZOOM_STEPS[ZOOM_STEPS.length - 1]);
+};
+
+// also support mouse wheel / pinch on radar
+el('radar').addEventListener('wheel', (e) => {
+  e.preventDefault();
+  if (e.deltaY < 0) el('zoomIn').click();
+  else el('zoomOut').click();
+}, { passive: false });
+
+function startRefresh() {
+  stopRefresh();
+  refreshTimer = setInterval(() => { if (liveMode) fetchLive(); }, REFRESH_MS);
+}
+function stopRefresh() {
+  if (refreshTimer) clearInterval(refreshTimer);
+  refreshTimer = null;
+}
+
+/* ===== Boot ===== */
+updateZoomLabel();
+fetchLive().then(ok => {
+  if (ok) startRefresh();
+  else loadSimulation();
+});
+</script>
+</body>
+</html>
