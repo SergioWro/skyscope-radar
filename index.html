@@ -33,16 +33,26 @@ main{padding:14px 16px 100px;max-width:600px;margin:auto}
 .town{position:absolute;color:#d7e0d5;font-size:10px;text-shadow:0 1px 4px #000;white-space:nowrap}
 .plane{position:absolute;color:#47ffee;text-shadow:0 0 8px #14e8da;font-size:21px;transform:rotate(var(--r,0deg));filter:drop-shadow(0 0 3px #1ff);cursor:pointer;transition:color .15s,text-shadow .15s;z-index:5}
 .plane.selected{color:#ffec41;text-shadow:0 0 12px #ffdf16;z-index:10}
-.tag{position:absolute;background:#071018eF;border:1px solid #48d8c8;padding:4px 7px;border-radius:4px;font-size:10px;white-space:nowrap;color:white;box-shadow:0 3px 10px #0008;z-index:6;pointer-events:none}
+.tag{position:absolute;background:#071018eF;border:1px solid #48d8c8;padding:3px 6px;border-radius:4px;font-size:9px;white-space:nowrap;color:white;box-shadow:0 3px 10px #0008;z-index:6;pointer-events:none;line-height:1.25;max-width:110px;overflow:hidden;text-overflow:ellipsis}
 .tag strong{color:#ffea54}
-.chip{position:absolute;top:5%;background:#061019d9;border:1px solid #46e4d3;color:white;border-radius:20px;padding:6px 12px;font-size:11px;z-index:4}
-.chip.left{left:17%;border-color:#3cf1b3}
-.chip.right{right:16%}
-.clock{position:absolute;top:4%;left:50%;transform:translateX(-50%);border:1px solid #55e8dc;background:#07131b;border-radius:20px;padding:5px 10px;font-size:12px;z-index:4}
-.zoom-controls{position:absolute;bottom:12%;right:8%;display:flex;flex-direction:column;gap:6px;z-index:8}
-.zoom-btn{width:36px;height:36px;border-radius:50%;border:1px solid #46e4d3;background:#061019e6;color:#75fff0;font-size:20px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px #0008}
-.zoom-btn:active{transform:scale(.92);background:#10302f}
-.zoom-label{position:absolute;bottom:12%;left:8%;background:#061019d9;border:1px solid #46e4d3;color:#a8e8df;border-radius:14px;padding:4px 10px;font-size:11px;z-index:8}
+.tag.compact{padding:2px 5px;font-size:8px;border-color:#2a5a55;opacity:.92}
+.zoom-bar{display:flex;align-items:center;justify-content:center;gap:12px;margin:12px auto 0;max-width:510px}
+.zoom-btn{width:42px;height:42px;border-radius:12px;border:1px solid #46e4d3;background:#0b1721;color:#75fff0;font-size:22px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.zoom-btn:active{transform:scale(.94);background:#10302f}
+.zoom-label{min-width:72px;text-align:center;background:#0b1721;border:1px solid #28434a;color:#a8e8df;border-radius:12px;padding:10px 14px;font-size:13px;font-weight:600}
+.filter-bar{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:10px auto 0;max-width:510px}
+.filter-chip{border:1px solid #21323e;background:#0b1721;color:#9bb0bc;border-radius:20px;padding:7px 12px;font-size:12px;cursor:pointer}
+.filter-chip.active{background:#10302f;border-color:#2ae6d1;color:#75fff0;font-weight:600}
+.filter-chip[data-type].active{border-color:#e6c12a;color:#ffe56a;background:#2a2410}
+.filter-label{width:100%;text-align:center;font-size:10px;color:#5a6e7a;margin:2px 0 0}
+.legend{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px 16px;margin:10px auto 0;max-width:510px;padding:8px 10px;background:#0a141d;border:1px solid #1d3440;border-radius:12px;font-size:11px;color:#9bb0bc}
+.legend-item{display:flex;align-items:center;gap:6px}
+.legend-tag{background:#071018;border:1px solid #48d8c8;padding:3px 6px;border-radius:4px;font-size:9px;color:#fff;line-height:1.25}
+.legend-tag strong{color:#ffea54}
+.legend-tag.compact{font-size:8px;border-color:#2a5a55;padding:2px 5px;opacity:.92}
+.center-bar{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:10px auto 0;max-width:510px}
+.center-chip{border:1px solid #21323e;background:#0b1721;color:#9bb0bc;border-radius:20px;padding:7px 12px;font-size:12px;cursor:pointer}
+.center-chip.active{background:#1a2a40;border-color:#5aa0ff;color:#9ec5ff;font-weight:600}
 .info{margin:18px auto 0;max-width:510px;background:linear-gradient(135deg,#0c1923,#09111a);border:1px solid #1d3440;border-radius:16px;padding:15px}
 .info-top{display:flex;justify-content:space-between;align-items:flex-start}
 .callsign{font-size:18px;font-weight:800}
@@ -81,30 +91,53 @@ main{padding:14px 16px 100px;max-width:600px;margin:auto}
       <div class="cross"></div>
       <div class="sweep"></div>
       <div class="compass"><b class="n">N</b><b class="s">S</b><b class="e">E</b><b class="w">W</b></div>
-      <div class="clock" id="radarClock">--:--</div>
-      <div class="chip left" id="chipLive">● Live</div>
-      <div class="chip right">Map</div>
-      <!-- Towns -->
-      <span class="town" style="left:18%;top:22%">נתניה</span>
-      <span class="town" style="left:62%;top:18%">חדרה</span>
-      <span class="town" style="left:8%;top:48%">תל אביב</span>
-      <span class="town" style="left:52%;top:48%">רמת גן</span>
-      <span class="town" style="left:28%;top:68%">ראשון לציון</span>
-      <span class="town" style="left:55%;top:78%">נתב״ג</span>
-      <span class="town" style="left:72%;top:58%">פתח תקווה</span>
-      <!-- Planes will be injected here by JS -->
+      <div id="townsLayer"></div>
       <div id="planesLayer"></div>
       <div id="tagsLayer"></div>
-      <div class="zoom-controls">
-        <button class="zoom-btn" id="zoomIn" title="הגדל">+</button>
-        <button class="zoom-btn" id="zoomOut" title="הקטן">−</button>
-      </div>
-      <div class="zoom-label" id="zoomLabel">90 nm</div>
     </div>
+  </div>
+  <div class="filter-label">מרכז המכ״ם</div>
+  <div class="center-bar" id="centerBar">
+    <button class="center-chip active" data-center="ramatgan">רמת גן</button>
+    <button class="center-chip" data-center="llbg">נתב״ג</button>
+    <button class="center-chip" data-center="haifa">חיפה</button>
+    <button class="center-chip" data-center="eilat">אילת / רמון</button>
+  </div>
+  <div class="zoom-bar">
+    <button class="zoom-btn" id="zoomOut" title="הקטן">−</button>
+    <div class="zoom-label" id="zoomLabel">60 nm</div>
+    <button class="zoom-btn" id="zoomIn" title="הגדל">+</button>
+  </div>
+  <div class="legend">
+    <div class="legend-item">
+      <span class="legend-tag"><strong>ELY312</strong><br>12,000 ft · HDG 300°</span>
+      <span>קרוב – פירוט מלא</span>
+    </div>
+    <div class="legend-item">
+      <span class="legend-tag compact"><strong>WZZ18A</strong></span>
+      <span>רחוק – מספר טיסה בלבד</span>
+    </div>
+  </div>
+  <div class="filter-bar" id="filterBar">
+    <button class="filter-chip active" data-filter="all">הכל</button>
+    <button class="filter-chip" data-filter="low">נמוך &lt;10k</button>
+    <button class="filter-chip" data-filter="high">גבוה &gt;25k</button>
+    <button class="filter-chip" data-filter="desc">יורדים</button>
+    <button class="filter-chip" data-filter="climb">עולים</button>
+    <button class="filter-chip" data-filter="named">עם קריאה</button>
+  </div>
+  <div class="filter-label">סוג מטוס</div>
+  <div class="filter-bar" id="typeFilterBar">
+    <button class="filter-chip active" data-type="all">כל הסוגים</button>
+    <button class="filter-chip" data-type="b737">Boeing 737</button>
+    <button class="filter-chip" data-type="a320">Airbus A320</button>
+    <button class="filter-chip" data-type="wide">רחב־גוף</button>
+    <button class="filter-chip" data-type="regional">אזורי / סילון קטן</button>
+    <button class="filter-chip" data-type="other">אחר</button>
   </div>
   <div class="toolbar">
     <button class="tool active" id="liveBtn">◉ &nbsp; Live</button>
-    <button class="tool" id="mapBtn">▧ &nbsp; Map</button>
+    <button class="tool active" id="mapBtn">▧ &nbsp; Map</button>
     <button class="tool" id="soundBtn">♫ &nbsp; שמע כבוי</button>
   </div>
   <section class="info">
@@ -130,12 +163,97 @@ main{padding:14px 16px 100px;max-width:600px;margin:auto}
 
 <script>
 /* ===== Configuration ===== */
-const CENTER = { lat: 32.0823, lon: 34.8106 }; // רמת גן / גוש דן
-const FETCH_RADIUS_NM = 120;               // רדיוס שליפת נתונים (קבוע, רחב יותר)
+const LOCATIONS = {
+  ramatgan: {
+    name: 'רמת גן / גוש דן',
+    lat: 32.0823, lon: 34.8106,
+    towns: [
+      {name:'נתניה', left:18, top:22},
+      {name:'חדרה', left:62, top:18},
+      {name:'תל אביב', left:8, top:48},
+      {name:'רמת גן', left:52, top:48},
+      {name:'ראשון לציון', left:28, top:68},
+      {name:'נתב״ג', left:55, top:78},
+      {name:'פתח תקווה', left:72, top:58}
+    ]
+  },
+  llbg: {
+    name: 'נתב״ג (בן גוריון)',
+    lat: 32.0114, lon: 34.8867,
+    towns: [
+      {name:'תל אביב', left:20, top:22},
+      {name:'רמת גן', left:38, top:28},
+      {name:'נתב״ג', left:50, top:50},
+      {name:'ראשון לציון', left:22, top:55},
+      {name:'מודיעין', left:72, top:48},
+      {name:'אשדוד', left:28, top:82},
+      {name:'ירושלים', left:78, top:72}
+    ]
+  },
+  haifa: {
+    name: 'נמל תעופה חיפה',
+    lat: 32.8094, lon: 35.0431,
+    towns: [
+      {name:'עכו', left:28, top:18},
+      {name:'נהריה', left:18, top:8},
+      {name:'חיפה', left:42, top:48},
+      {name:'נמל חיפה', left:38, top:55},
+      {name:'קריות', left:55, top:38},
+      {name:'טבעון', left:62, top:68},
+      {name:'יקנעם', left:58, top:82}
+    ]
+  },
+  eilat: {
+    name: 'נמל תעופה רמון (אילת)',
+    lat: 29.7237, lon: 35.0114,
+    towns: [
+      {name:'אילת', left:48, top:78},
+      {name:'רמון', left:50, top:48},
+      {name:'באר אורה', left:42, top:58},
+      {name:'יוטבתה', left:48, top:22},
+      {name:'עקבה', left:62, top:85},
+      {name:'נואיבה', left:78, top:92}
+    ]
+  }
+};
+let centerKey = 'ramatgan';
+let CENTER = { lat: LOCATIONS.ramatgan.lat, lon: LOCATIONS.ramatgan.lon };
+const FETCH_RADIUS_NM = 120;
 const REFRESH_MS = 12000;
 const MAX_PLANES = 40;
-const ZOOM_STEPS = [25, 40, 60, 90, 120, 180]; // nm
-let viewRadiusNm = 60;                     // זום התחלתי (קרוב יותר – פחות צפוף)
+const ZOOM_STEPS = [25, 40, 60, 90, 120, 180];
+let viewRadiusNm = 60;
+
+function renderTowns() {
+  const layer = el('townsLayer');
+  if (!layer) return;
+  layer.innerHTML = '';
+  const loc = LOCATIONS[centerKey];
+  (loc.towns || []).forEach(t => {
+    const s = document.createElement('span');
+    s.className = 'town';
+    s.style.left = t.left + '%';
+    s.style.top = t.top + '%';
+    s.textContent = t.name;
+    layer.appendChild(s);
+  });
+}
+
+async function setCenter(key) {
+  if (!LOCATIONS[key]) return;
+  centerKey = key;
+  CENTER = { lat: LOCATIONS[key].lat, lon: LOCATIONS[key].lon };
+  document.querySelectorAll('.center-chip').forEach(b => {
+    b.classList.toggle('active', b.dataset.center === key);
+  });
+  renderTowns();
+  selectedHex = null;
+  if (liveMode) {
+    await fetchLive();
+  } else if (aircraftCache.length) {
+    renderPlanes(aircraftCache);
+  }
+}
 
 /* ===== Helpers ===== */
 const el = id => document.getElementById(id);
@@ -146,11 +264,43 @@ let liveMode = true;
 let selectedHex = null;
 let aircraftCache = [];
 let refreshTimer = null;
+let currentFilter = 'all';
+let typeFilter = 'all';
+
+function typeCategory(t) {
+  if (!t) return 'other';
+  const u = String(t).toUpperCase();
+  // Boeing 737 family
+  if (/^B73[0-9]|^B37M|^B38M|^73[0-9]/.test(u)) return 'b737';
+  // Airbus A320 family (A318-A321, neo)
+  if (/^A31[89]|^A32[0-1]|^A20N|^A21N/.test(u)) return 'a320';
+  // Widebody
+  if (/^B74|^B77|^B78|^A33|^A34|^A35|^A38|^B76|^MD1/.test(u)) return 'wide';
+  // Regional / small jet / turboprop
+  if (/^E1[457]|^E17|^E19|^E2|^CRJ|^AT7|^AT4|^DH8|^DHC|^SF3|^BCS|^A220|^C56|^C68|^LJ|^GLF|^C25|^C56X|^PC12|^BE40/.test(u)) return 'regional';
+  return 'other';
+}
+
+function passesFilter(ac) {
+  const alt = ac.alt;
+  const rate = ac.baro_rate || 0;
+  let ok = true;
+  switch (currentFilter) {
+    case 'low': ok = alt != null && alt < 10000; break;
+    case 'high': ok = alt != null && alt > 25000; break;
+    case 'desc': ok = rate < -200; break;
+    case 'climb': ok = rate > 200; break;
+    case 'named': ok = !!(ac.flight && ac.flight.trim()); break;
+    default: ok = true;
+  }
+  if (!ok) return false;
+  if (typeFilter === 'all') return true;
+  return typeCategory(ac.t) === typeFilter;
+}
 
 function updateClock() {
   const d = new Date();
   el('clock').textContent = d.toISOString().slice(11,19) + ' UTC';
-  el('radarClock').textContent = d.toISOString().slice(11,16);
 }
 setInterval(updateClock, 1000);
 updateClock();
@@ -199,16 +349,16 @@ function renderPlanes(list) {
   clearPlanes();
   aircraftCache = list;
 
-  // compute distances and keep only planes inside current view (+ small margin)
   const withPos = list.map(ac => {
     const pos = geoToRadar(ac.lat, ac.lon);
     return { ...ac, _dist: pos.dist, _pos: pos };
-  }).filter(ac => ac._pos.inView);
+  }).filter(ac => ac._pos.inView && passesFilter(ac));
 
   withPos.sort((a,b) => a._dist - b._dist);
 
   withPos.slice(0, MAX_PLANES).forEach((ac, idx) => {
     const pos = ac._pos;
+    const label = (ac.flight && ac.flight.trim()) || (ac.hex || '—').toUpperCase();
 
     const plane = document.createElement('span');
     plane.className = 'plane' + (ac.hex === selectedHex ? ' selected' : '');
@@ -217,22 +367,33 @@ function renderPlanes(list) {
     plane.style.setProperty('--r', (ac.track || 0) + 'deg');
     plane.textContent = '✈';
     plane.dataset.hex = ac.hex;
-    plane.title = (ac.flight || ac.hex) + ' · ' + formatAlt(ac.alt) + ' · ' + Math.round(pos.dist) + ' nm';
+    plane.title = label + ' · ' + formatAlt(ac.alt) + ' · HDG ' + formatHdg(ac.track) + ' · ' + Math.round(pos.dist) + ' nm';
     plane.addEventListener('click', () => selectAircraft(ac.hex));
     planesLayer.appendChild(plane);
 
-    // tags for closest few
-    if (idx < 5 && ac.flight) {
-      const tag = document.createElement('div');
-      tag.className = 'tag';
-      tag.style.left = Math.min(85, pos.left + 3) + '%';
-      tag.style.top  = Math.max(8, pos.top - 9) + '%';
-      tag.innerHTML = `<strong>${ac.flight.trim()}</strong><br>${formatAlt(ac.alt)} · HDG ${formatHdg(ac.track)}`;
-      tagsLayer.appendChild(tag);
+    // label every aircraft
+    const tag = document.createElement('div');
+    const detailed = idx < 8; // full info for closest ones
+    tag.className = 'tag' + (detailed ? '' : ' compact');
+    // slight offset so tags don't sit exactly on the icon
+    const ox = (idx % 2 === 0) ? 3.5 : -12;
+    const oy = (idx % 3 === 0) ? -10 : -7;
+    tag.style.left = Math.max(2, Math.min(86, pos.left + ox)) + '%';
+    tag.style.top  = Math.max(4, Math.min(90, pos.top + oy)) + '%';
+    if (detailed) {
+      tag.innerHTML = `<strong>${label}</strong><br>${formatAlt(ac.alt)} · HDG ${formatHdg(ac.track)}`;
+    } else {
+      tag.innerHTML = `<strong>${label}</strong>`;
     }
+    tagsLayer.appendChild(tag);
   });
 
   updateZoomLabel();
+  const totalInView = list.filter(a => geoToRadar(a.lat, a.lon).inView).length;
+  const shown = withPos.length;
+  if ((currentFilter !== 'all' || typeFilter !== 'all') && el('statusMsg')) {
+    el('statusMsg').textContent = `סינון: ${shown} מתוך ${totalInView} בתצוגה`;
+  }
 }
 
 function guessPhase(ac) {
@@ -372,7 +533,6 @@ async function fetchLive() {
 
     el('liveLabel').textContent = `LIVE · ${mapped.length} מטוסים`;
     el('liveDot').classList.remove('off');
-    el('chipLive').textContent = '● Live';
     el('liveBtn').classList.add('active');
     liveMode = true;
     el('statusMsg').textContent = `עודכן · מקור: adsb.lol · תצוגה ${viewRadiusNm} nm`;
@@ -381,7 +541,6 @@ async function fetchLive() {
     console.warn('Live fetch failed', err);
     el('liveLabel').textContent = 'סימולציה · אין חיבור';
     el('liveDot').classList.add('off');
-    el('chipLive').textContent = '○ Sim';
     el('liveBtn').classList.remove('active');
     liveMode = false;
     stopRefresh();
@@ -418,7 +577,6 @@ el('liveBtn').onclick = async () => {
     stopRefresh();
     el('liveLabel').textContent = 'השהייה';
     el('liveDot').classList.add('off');
-    el('chipLive').textContent = '○ Off';
   } else {
     // try to go live again
     el('liveBtn').classList.add('active');
@@ -427,10 +585,21 @@ el('liveBtn').onclick = async () => {
   }
 };
 
+let mapVisible = true;
 el('mapBtn').onclick = () => {
+  mapVisible = !mapVisible;
   const map = document.querySelector('.map');
-  map.style.filter = map.style.filter ? '' : 'grayscale(1) brightness(.75)';
-  el('mapBtn').classList.toggle('active');
+  const water = document.querySelector('.water');
+  if (map) {
+    map.style.opacity = mapVisible ? '1' : '0';
+    map.style.transition = 'opacity .25s ease';
+  }
+  if (water) {
+    water.style.opacity = mapVisible ? '0.75' : '0';
+    water.style.transition = 'opacity .25s ease';
+  }
+  el('mapBtn').classList.toggle('active', mapVisible);
+  el('mapBtn').textContent = mapVisible ? '▧  Map' : '▧  ללא מפה';
 };
 
 /* ===== Radar sound (Web Audio) ===== */
@@ -519,13 +688,17 @@ el('centerBtn').onclick = () => {
 };
 
 el('loc').onclick = () => {
-  alert('מיקום נוכחי ממוקד על רמת גן / גוש דן.\nתצוגה נוכחית: ' + viewRadiusNm + ' nm.\nמקור נתונים: adsb.lol (ADS-B חי).');
+  const loc = LOCATIONS[centerKey];
+  alert('מרכז נוכחי: ' + loc.name + '\nתצוגה: ' + viewRadiusNm + ' nm\nמקור: adsb.lol (ADS-B חי)');
 };
+
+document.querySelectorAll('.center-chip').forEach(btn => {
+  btn.onclick = () => setCenter(btn.dataset.center);
+});
 
 function setZoom(nm) {
   viewRadiusNm = nm;
   updateZoomLabel();
-  // re-render from cache (no new network call needed)
   if (aircraftCache.length) renderPlanes(aircraftCache);
 }
 
@@ -540,6 +713,24 @@ el('zoomOut').onclick = () => {
   if (idx >= 0 && idx < ZOOM_STEPS.length - 1) setZoom(ZOOM_STEPS[idx + 1]);
   else if (viewRadiusNm < ZOOM_STEPS[ZOOM_STEPS.length - 1]) setZoom(ZOOM_STEPS[ZOOM_STEPS.length - 1]);
 };
+
+document.querySelectorAll('#filterBar .filter-chip').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('#filterBar .filter-chip').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentFilter = btn.dataset.filter || 'all';
+    if (aircraftCache.length) renderPlanes(aircraftCache);
+  };
+});
+
+document.querySelectorAll('#typeFilterBar .filter-chip').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('#typeFilterBar .filter-chip').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    typeFilter = btn.dataset.type || 'all';
+    if (aircraftCache.length) renderPlanes(aircraftCache);
+  };
+});
 
 // also support mouse wheel / pinch on radar
 el('radar').addEventListener('wheel', (e) => {
@@ -559,6 +750,7 @@ function stopRefresh() {
 
 /* ===== Boot ===== */
 updateZoomLabel();
+renderTowns();
 fetchLive().then(ok => {
   if (ok) startRefresh();
   else loadSimulation();
